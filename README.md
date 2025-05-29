@@ -34,17 +34,25 @@ Extract all **embedded images** from a PDF file (not page renders) and download 
    python --version
    
 Clone this repo:
+```bash
 git clone https://github.com/your-username/pdf-image-extractor.git
 cd pdf-image-extractor
+```
 
 Install dependencies:
+```bash
 pip install -r requirements.txt
+```
 
 ℹ️ If requirements.txt is missing or broken, you can manually install:
+```bash
 pip install flask pymupdf
+```
 
 Run the app:
+```bash
 python app.py
+```
 
 Visit: http://127.0.0.1:5000 in your browser
 
