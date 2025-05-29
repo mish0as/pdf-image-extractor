@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>PDF Image Extractor Pro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .file-input::file-selector-button {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .file-input::file-selector-button:hover {
+      background: #2563eb;
+    }
+    .image-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    .progress-bar {
+      transition: width 0.3s ease;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex flex-col items-center justify-center p-4 md:p-8">
+  <div class="bg-white shadow-2xl rounded-2xl p-6 md:p-10 w-full max-w-6xl">
+    <div class="text-center mb-8">
+      <div class="flex items-center justify-center mb-4">
+        <i class="fas fa-file-pdf text-4xl text-red-500 mr-3"></i>
+        <h1 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">PDF Image Extractor Pro</h1>
+      </div>
+      <p class="text-gray-600 max-w-2xl mx-auto">Extract high-quality embedded images from your PDF files with a single click. Perfect for designers, archivists, and content creators.</p>
+    </div>
+
+    <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-8">
+      <div class="flex flex-col md:flex-row items-center gap-4">
+        <div class="flex-1 w-full">
+          <form id="uploadForm" class="space-y-4">
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-700">Select PDF File</label>
+              <input type="file" name="pdf_file" id="pdfInput" accept="application/pdf" class="file-input block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer" required>
+            </div>
+            <button type="submit" id="submitBtn" class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300">
+              <i class="fas fa-magic"></i> Extract Images
+            </button>
+          </form>
+        </div>
+        <div class="hidden md:block border-l border-blue-200 h-24"></div>
+        <div class="flex-1 w-full text-center md:text-left">
+          <h3 class="font-semibold text-gray-800 mb-2">How it works</h3>
+          <ol class="text-sm text-gray-600 space-y-1">
+            <li>1. Upload your PDF file</li>
+            <li>2. We'll scan it for embedded images</li>
+            <li>3. Preview and download all images</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <div id="loading" class="hidden">
+      <div class="text-center mb-6">
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-3"></div>
+        <h3 class="text-lg font-medium text-gray-800">Processing your PDF...</h3>
+        <p class="text-gray-600" id="progressText">Scanning document</p>
+        <div class="w-full bg-gray-200 rounded-full h-2.5 mt-4 max-w-md mx-auto">
+          <div id="progressBar" class="progress-bar bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="error" class="hidden bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded">
+      <div class="flex items-center">
+        <div class="flex-shrink-0">
+          <i class="fas fa-exclamation-circle text-red-500"></i>
+        </div>
+        <div class="ml-3">
+          <p id="errorText" class="text-sm text-red-700"></p>
+        </div>
+      </div>
+    </div>
+
+    <div id="summary" class="hidden bg-green-50 border-l-4 border-green-500 p-4 mb-6 rounded">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <i class="fas fa-check-circle text-green-500 mr-3"></i>
+          <div>
+            <h3 id="summaryText" class="text-sm font-medium text-green-800"></h3>
+            <p id="filenameText" class="text-xs text-green-700 mt-1"></p>
+          </div>
+        </div>
+        <button id="downloadZipBtn" class="hidden bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
+          <i class="fas fa-file-archive"></i> Download All
+        </button>
+      </div>
+    </div>
+
+    <div id="imageContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6"></div>
+
+    <div class="mt-12 pt-6 border-t border-gray-200 text-center">
+      <p class="text-sm text-gray-500">Need help? <a href="#" class="text-blue-600 hover:underline">Contact support</a></p>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('uploadForm');
+    const pdfInput = document.getElementById('pdfInput');
+    const loading = document.getElementById('loading');
+    const errorDiv = document.getElementById('error');
+    const errorText = document.getElementById('errorText');
+    const imageContainer = document.getElementById('imageContainer');
+    const zipBtn = document.getElementById('downloadZipBtn');
+    const summaryDiv = document.getElementById('summary');
+    const summaryText = document.getElementById('summaryText');
+    const filenameText = document.getElementById('filenameText');
+    const progressText = document.getElementById('progressText');
+    const progressBar = document.getElementById('progressBar');
+    const submitBtn = document.getElementById('submitBtn');
+
+    let extractedImages = [];
+
+    const simulateProgress = () => {
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += Math.random() * 10;
+        if (progress >= 90) clearInterval(interval);
+        progressBar.style.width = `${Math.min(progress, 90)}%`;
+        
+        if (progress < 30) {
+          progressText.textContent = "Scanning document structure...";
+        } else if (progress < 60) {
+          progressText.textContent = "Identifying embedded images...";
+        } else {
+          progressText.textContent = "Extracting image data...";
+        }
+      }, 300);
+      return interval;
+    };
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      imageContainer.innerHTML = '';
+      zipBtn.classList.add('hidden');
+      summaryDiv.classList.add('hidden');
+      errorDiv.classList.add('hidden');
+      loading.classList.remove('hidden');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+      const progressInterval = simulateProgress();
+
+      try {
+        const formData = new FormData();
+        formData.append('pdf_file', pdfInput.files[0]);
+
+        const res = await fetch('/extract', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await res.json();
+        clearInterval(progressInterval);
+        progressBar.style.width = '100%';
+        progressText.textContent = "Done!";
+
+        setTimeout(() => {
+          loading.classList.add('hidden');
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="fas fa-magic"></i> Extract Images';
+        }, 500);
+
+        if (data.error) {
+          errorText.textContent = data.error;
+          errorDiv.classList.remove('hidden');
+          return;
+        }
+
+        extractedImages = data.images;
+
+        // Show summary
+        summaryText.textContent = `Successfully extracted ${data.summary.total_images} images`;
+        filenameText.textContent = `From: ${data.summary.original_filename}`;
+        summaryDiv.classList.remove('hidden');
+        zipBtn.classList.remove('hidden');
+
+        // Display images
+        if (data.images.length > 0) {
+          data.images.forEach((img, index) => {
+            const card = document.createElement('div');
+            card.classList.add("image-card", "bg-white", "rounded-xl", "overflow-hidden", "shadow-md", "transition-all", "duration-300", "border", "border-gray-100");
+            
+            const imgWrapper = document.createElement('div');
+            imgWrapper.classList.add("relative", "pt-[100%]", "bg-gray-100", "overflow-hidden");
+            
+            const image = new Image();
+            image.src = `data:image/${img.ext};base64,${img.base64}`;
+            image.classList.add("absolute", "top-0", "left-0", "w-full", "h-full", "object-contain", "p-2");
+            image.loading = "lazy";
+            
+            const info = document.createElement('div');
+            info.classList.add("p-3", "border-t", "border-gray-100");
+            
+            const filename = document.createElement('p');
+            filename.classList.add("text-sm", "font-medium", "text-gray-900", "truncate");
+            filename.textContent = img.filename;
+            
+            const meta = document.createElement('div');
+            meta.classList.add("flex", "justify-between", "mt-2", "text-xs", "text-gray-500");
+            meta.innerHTML = `
+              <span>${img.size}</span>
+              <span>${img.dimensions}</span>
+            `;
+            
+            const downloadBtn = document.createElement('a');
+            downloadBtn.href = image.src;
+            downloadBtn.download = img.filename;
+            downloadBtn.classList.add("mt-3", "w-full", "inline-flex", "items-center", "justify-center", "gap-2", "bg-blue-50", "hover:bg-blue-100", "text-blue-700", "px-3", "py-2", "rounded-md", "text-sm", "font-medium", "transition-colors");
+            downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download';
+            
+            imgWrapper.appendChild(image);
+            info.appendChild(filename);
+            info.appendChild(meta);
+            info.appendChild(downloadBtn);
+            card.appendChild(imgWrapper);
+            card.appendChild(info);
+            imageContainer.appendChild(card);
+          });
+        }
+      } catch (err) {
+        clearInterval(progressInterval);
+        loading.classList.add('hidden');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-magic"></i> Extract Images';
+        errorText.textContent = "An unexpected error occurred. Please try again.";
+        errorDiv.classList.remove('hidden');
+        console.error(err);
+      }
+    });
+
+    zipBtn.addEventListener('click', async () => {
+      zipBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing...';
+      zipBtn.disabled = true;
+      
+      try {
+        const res = await fetch('/download-zip', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ images: extractedImages })
+        });
+
+        if (res.ok) {
+          const blob = await res.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'pdf-images.zip';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        } else {
+          const error = await res.json();
+          throw new Error(error.error || 'Failed to create zip file');
+        }
+      } catch (err) {
+        errorText.textContent = err.message;
+        errorDiv.classList.remove('hidden');
+      } finally {
+        zipBtn.innerHTML = '<i class="fas fa-file-archive"></i> Download All';
+        zipBtn.disabled = false;
+      }
+    });
+
+    // Drag and drop functionality
+    const dropArea = document.querySelector('body');
+    
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      dropArea.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropArea.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropArea.addEventListener(eventName, unhighlight, false);
+    });
+
+    function highlight() {
+      document.querySelector('.bg-white').classList.add('ring-4', 'ring-blue-400');
+    }
+
+    function unhighlight() {
+      document.querySelector('.bg-white').classList.remove('ring-4', 'ring-blue-400');
+    }
+
+    dropArea.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      
+      if (files.length > 0 && files[0].type === 'application/pdf') {
+        pdfInput.files = files;
+        // Trigger extraction automatically
+        const event = new Event('submit');
+        form.dispatchEvent(event);
+      } else {
+        errorText.textContent = "Please drop a PDF file only";
+        errorDiv.classList.remove('hidden');
+      }
+    }
+  </script>
+</body>
+</html>
