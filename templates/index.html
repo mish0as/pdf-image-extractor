@@ -4,23 +4,85 @@
   <meta charset="UTF-8" />
   <title>PDF Image Extractor Pro</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     body {
       font-family: 'Inter', sans-serif;
     }
-    .file-input::file-selector-button {
-      background: #3b82f6;
-      color: white;
-      border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 0.375rem;
-      cursor: pointer;
-      transition: all 0.2s;
+    .file-input-container {
+      position: relative;
+      margin-bottom: 1rem;
     }
-    .file-input::file-selector-button:hover {
-      background: #2563eb;
+    .file-input-label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      border: 2px dashed #d1d5db;
+      border-radius: 0.5rem;
+      background-color: #f9fafb;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .file-input-label:hover {
+      border-color: #3b82f6;
+      background-color: #f0f7ff;
+    }
+    .file-input-label.drag-over {
+      border-color: #3b82f6;
+      background-color: #ebf4ff;
+    }
+    .file-input {
+      position: absolute;
+      width: 0.1px;
+      height: 0.1px;
+      opacity: 0;
+      overflow: hidden;
+      z-index: -1;
+    }
+    .file-input-icon {
+      font-size: 2rem;
+      color: #3b82f6;
+      margin-bottom: 0.5rem;
+    }
+    .file-input-text {
+      font-size: 0.875rem;
+      color: #4b5563;
+      margin-bottom: 0.25rem;
+    }
+    .file-input-hint {
+      font-size: 0.75rem;
+      color: #6b7280;
+    }
+    .file-selected {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem;
+      background-color: #f0f7ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 0.375rem;
+      margin-top: 0.5rem;
+    }
+    .file-selected-name {
+      font-size: 0.875rem;
+      color: #1e40af;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 80%;
+    }
+    .file-selected-clear {
+      color: #6b7280;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .file-selected-clear:hover {
+      color: #ef4444;
     }
     .image-card:hover {
       transform: translateY(-5px);
@@ -29,6 +91,111 @@
     .progress-bar {
       transition: width 0.3s ease;
     }
+    
+    /* Improved footer styles */
+  .premium-footer {
+    position: relative;
+    overflow: hidden;
+    padding: 2rem 1rem;
+    margin-top: 4rem;
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, rgba(249, 250, 251, 0.9) 0%, rgba(243, 244, 246, 0.9) 100%);
+    border-top: 1px solid rgba(209, 213, 219, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 0 0 1rem 1rem;
+    box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05), 0 -2px 4px -1px rgba(0, 0, 0, 0.03);
+    backdrop-filter: blur(4px);
+  }
+
+  .footer-content {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    z-index: 10;
+    font-size: 0.875rem;
+    color: #4b5563;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .footer-text {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    transition: all 0.3s ease;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.375rem;
+  }
+
+  .footer-text:hover {
+    background-color: rgba(229, 231, 235, 0.5);
+    transform: translateY(-1px);
+  }
+
+  .heart {
+    color: #ef4444;
+    animation: pulse 1.5s infinite;
+    will-change: transform;
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+  }
+
+  .app-version {
+    background-color: rgba(229, 231, 235, 0.7);
+    padding: 0.375rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    color: #4b5563;
+    font-weight: 500;
+    border: 1px solid rgba(209, 213, 219, 0.5);
+    transition: all 0.3s ease;
+  }
+
+  .app-version:hover {
+    background-color: rgba(209, 213, 219, 0.7);
+    transform: translateY(-1px);
+  }
+
+  .footer-divider {
+    width: 1px;
+    height: 1.25rem;
+    background-color: rgba(156, 163, 175, 0.3);
+  }
+
+  /* Decorative elements */
+  .footer-decoration {
+    position: absolute;
+    pointer-events: none;
+    opacity: 0.1;
+    z-index: 1;
+  }
+
+  .footer-decoration.circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+    right: -30px;
+    bottom: -30px;
+  }
+
+  .footer-decoration.square {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(45deg, #10b981, #3b82f6);
+    left: -20px;
+    top: -20px;
+    transform: rotate(15deg);
+  }
   </style>
 </head>
 <body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex flex-col items-center justify-center p-4 md:p-8">
@@ -46,8 +213,19 @@
         <div class="flex-1 w-full">
           <form id="uploadForm" class="space-y-4">
             <div class="space-y-2">
-              <label class="block text-sm font-medium text-gray-700">Select PDF File</label>
-              <input type="file" name="pdf_file" id="pdfInput" accept="application/pdf" class="file-input block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer" required>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Select PDF File</label>
+              <div class="file-input-container">
+                <label for="pdfInput" id="fileInputLabel" class="file-input-label">
+                  <i class="fas fa-cloud-upload-alt file-input-icon"></i>
+                  <span class="file-input-text">Click to browse or drag & drop</span>
+                  <span class="file-input-hint">PDF files only (Max: 25MB)</span>
+                </label>
+                <input type="file" name="pdf_file" id="pdfInput" accept="application/pdf" class="file-input" required>
+                <div id="fileSelectedDisplay" class="file-selected hidden">
+                  <span id="selectedFileName" class="file-selected-name"></span>
+                  <i class="fas fa-times file-selected-clear" id="clearFileSelection"></i>
+                </div>
+              </div>
             </div>
             <button type="submit" id="submitBtn" class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-300">
               <i class="fas fa-magic"></i> Extract Images
@@ -105,14 +283,41 @@
 
     <div id="imageContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6"></div>
 
-    <div class="mt-12 pt-6 border-t border-gray-200 text-center">
-      <p class="text-sm text-gray-500">Need help? <a href="#" class="text-blue-600 hover:underline">Contact support</a></p>
-    </div>
+<footer class="premium-footer no-print">
+  <!-- Decorative elements -->
+  <div class="footer-decoration circle"></div>
+  <div class="footer-decoration square"></div>
+  
+  <div class="footer-content">
+    <span class="app-version">v1.2.1</span>
+    <span class="footer-divider"></span>
+    <span class="footer-text">&copy; <span id="current-year">2025</span> MAS</span>
+    <span class="footer-divider"></span>
+    <span class="footer-text love-line">
+      Made with <i class="fas fa-heart heart" aria-hidden="true"></i> 
+    </span>
+    <span class="footer-divider"></span>
+    <span class="footer-text">
+      <i class="fas fa-lock"></i> Secure processing
+    </span>
+    <span class="footer-divider"></span>
+    <span class="footer-text">
+      <i class="fas fa-shield-alt"></i> Privacy focused
+    </span>
+  </div>
+</footer>
   </div>
 
   <script>
+    // Set current year in footer
+    document.getElementById('current-year').textContent = new Date().getFullYear();
+
     const form = document.getElementById('uploadForm');
     const pdfInput = document.getElementById('pdfInput');
+    const fileInputLabel = document.getElementById('fileInputLabel');
+    const fileSelectedDisplay = document.getElementById('fileSelectedDisplay');
+    const selectedFileName = document.getElementById('selectedFileName');
+    const clearFileSelection = document.getElementById('clearFileSelection');
     const loading = document.getElementById('loading');
     const errorDiv = document.getElementById('error');
     const errorText = document.getElementById('errorText');
@@ -126,6 +331,24 @@
     const submitBtn = document.getElementById('submitBtn');
 
     let extractedImages = [];
+
+    // File input handling
+    pdfInput.addEventListener('change', function() {
+      if (this.files.length > 0) {
+        const file = this.files[0];
+        selectedFileName.textContent = file.name;
+        fileSelectedDisplay.classList.remove('hidden');
+        fileInputLabel.classList.add('hidden');
+      }
+    });
+
+    clearFileSelection.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      pdfInput.value = '';
+      fileSelectedDisplay.classList.add('hidden');
+      fileInputLabel.classList.remove('hidden');
+    });
 
     const simulateProgress = () => {
       let progress = 0;
@@ -245,45 +468,50 @@
       }
     });
 
-    zipBtn.addEventListener('click', async () => {
-      zipBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing...';
-      zipBtn.disabled = true;
-      
-      try {
-        const res = await fetch('/download-zip', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ images: extractedImages })
-        });
-
-        if (res.ok) {
-          const blob = await res.blob();
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'pdf-images.zip';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        } else {
-          const error = await res.json();
-          throw new Error(error.error || 'Failed to create zip file');
-        }
-      } catch (err) {
-        errorText.textContent = err.message;
-        errorDiv.classList.remove('hidden');
-      } finally {
-        zipBtn.innerHTML = '<i class="fas fa-file-archive"></i> Download All';
-        zipBtn.disabled = false;
-      }
+zipBtn.addEventListener('click', async () => {
+  zipBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing...';
+  zipBtn.disabled = true;
+  
+  try {
+    // Create a new JSZip instance
+    const zip = new JSZip();
+    const imgFolder = zip.folder("extracted_images");
+    
+    // Add each image to the zip
+    extractedImages.forEach((img, index) => {
+      // Convert base64 to binary string
+      const base64Data = img.base64.replace(/^data:image\/(png|jpeg|jpg);base64,/, "");
+      imgFolder.file(img.filename, base64Data, { base64: true });
     });
+    
+    // Generate the zip file
+    const content = await zip.generateAsync({ type: "blob" });
+    
+    // Create download link
+    const url = window.URL.createObjectURL(content);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'pdf-images.zip';
+    document.body.appendChild(a);
+    a.click();
+    
+    // Clean up
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    
+  } catch (err) {
+    errorText.textContent = "Failed to create zip file: " + err.message;
+    errorDiv.classList.remove('hidden');
+    console.error("Zip creation error:", err);
+  } finally {
+    zipBtn.innerHTML = '<i class="fas fa-file-archive"></i> Download All';
+    zipBtn.disabled = false;
+  }
+});
 
     // Drag and drop functionality
-    const dropArea = document.querySelector('body');
-    
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-      dropArea.addEventListener(eventName, preventDefaults, false);
+      fileInputLabel.addEventListener(eventName, preventDefaults, false);
     });
 
     function preventDefaults(e) {
@@ -292,22 +520,18 @@
     }
 
     ['dragenter', 'dragover'].forEach(eventName => {
-      dropArea.addEventListener(eventName, highlight, false);
+      fileInputLabel.addEventListener(eventName, () => {
+        fileInputLabel.classList.add('drag-over');
+      }, false);
     });
 
     ['dragleave', 'drop'].forEach(eventName => {
-      dropArea.addEventListener(eventName, unhighlight, false);
+      fileInputLabel.addEventListener(eventName, () => {
+        fileInputLabel.classList.remove('drag-over');
+      }, false);
     });
 
-    function highlight() {
-      document.querySelector('.bg-white').classList.add('ring-4', 'ring-blue-400');
-    }
-
-    function unhighlight() {
-      document.querySelector('.bg-white').classList.remove('ring-4', 'ring-blue-400');
-    }
-
-    dropArea.addEventListener('drop', handleDrop, false);
+    fileInputLabel.addEventListener('drop', handleDrop, false);
 
     function handleDrop(e) {
       const dt = e.dataTransfer;
@@ -315,9 +539,9 @@
       
       if (files.length > 0 && files[0].type === 'application/pdf') {
         pdfInput.files = files;
-        // Trigger extraction automatically
-        const event = new Event('submit');
-        form.dispatchEvent(event);
+        selectedFileName.textContent = files[0].name;
+        fileSelectedDisplay.classList.remove('hidden');
+        fileInputLabel.classList.add('hidden');
       } else {
         errorText.textContent = "Please drop a PDF file only";
         errorDiv.classList.remove('hidden');
